@@ -1,45 +1,65 @@
-# sertifikat_kompetensi
+# Smart Contract Sertifikat Kompetensi
 
-This starter full stack project has been generated using AlgoKit. See below for default getting started instructions.
+Proyek ini adalah contoh _smart contract_ di blockchain Algorand untuk menerbitkan dan memverifikasi sertifikat kompetensi digital. Dibangun menggunakan `algopy` dan `AlgoKit`.
 
-## Setup
+## Konsep Dasar
 
-### Initial setup
-1. Clone this repository to your local machine.
-2. Ensure [Docker](https://www.docker.com/) is installed and operational. Then, install `AlgoKit` following this [guide](https://github.com/algorandfoundation/algokit-cli#install).
-3. Run `algokit project bootstrap all` in the project directory. This command sets up your environment by installing necessary dependencies, setting up a Python virtual environment, and preparing your `.env` file.
-4. In the case of a smart contract project, execute `algokit generate env-file -a target_network localnet` from the `sertifikat_kompetensi-contracts` directory to create a `.env.localnet` file with default configuration for `localnet`.
-5. To build your project, execute `algokit project run build`. This compiles your project and prepares it for running.
-6. For project-specific instructions, refer to the READMEs of the child projects:
-   - Smart Contracts: [sertifikat_kompetensi-contracts](projects/sertifikat_kompetensi-contracts/README.md)
-   - Frontend Application: [sertifikat_kompetensi-frontend](projects/sertifikat_kompetensi-frontend/README.md)
+_Smart contract_ ini memiliki dua fungsi utama:
 
-> This project is structured as a monorepo, refer to the [documentation](https://github.com/algorandfoundation/algokit-cli/blob/main/docs/features/project/run.md) to learn more about custom command orchestration via `algokit project run`.
+1.  **`issue_certificate`**: Untuk menerbitkan sertifikat baru. Hanya pembuat kontrak (_creator_) yang dapat memanggil fungsi ini.
+2.  **`verify_certificate`**: Untuk memverifikasi keaslian sertifikat berdasarkan ID uniknya. Siapa pun dapat memanggil fungsi ini.
 
-### Subsequently
+## Setup & Instalasi
 
-1. If you update to the latest source code and there are new dependencies, you will need to run `algokit project bootstrap all` again.
-2. Follow step 3 above.
+Pastikan Anda sudah menginstal [Docker](https://www.docker.com/) dan [AlgoKit](https://github.com/algorandfoundation/algokit-cli#install).
 
-## Tools
+1.  **Clone Repository**
+    ```bash
+    git clone <URL_REPOSITORY_ANDA>
+    cd sertifikat_kompetensi
+    ```
 
-This project makes use of Python and React to build Algorand smart contracts and to provide a base project configuration to develop frontends for your Algorand dApps and interactions with smart contracts. The following tools are in use:
+2.  **Bootstrap Proyek**
+    Perintah ini akan menginstal semua dependensi yang diperlukan untuk backend dan frontend.
+    ```bash
+    algokit project bootstrap all
+    ```
 
-- Algorand, AlgoKit, and AlgoKit Utils
-- Python dependencies including Poetry, Black, Ruff or Flake8, mypy, pytest, and pip-audit
-- React and related dependencies including AlgoKit Utils, Tailwind CSS, daisyUI, use-wallet, npm, jest, playwright, Prettier, ESLint, and Github Actions workflows for build validation
+3.  **Build Smart Contract**
+    Masuk ke direktori kontrak dan kompilasi _smart contract_ Anda.
+    ```bash
+    cd projects/sertifikat_kompetensi-contracts
+    algokit project run build
+    ```
+    Jika berhasil, artefak kontrak (file `application.json`, `approval.teal`, dan `clear.teal`) akan dibuat di dalam direktori `sertifikat_kompetensi-contracts/smart_contracts/artifacts/sertifikat_kompetensi`.
 
-### VS Code
+## Menjalankan & Berinteraksi dengan Kontrak
 
-It has also been configured to have a productive dev experience out of the box in [VS Code](https://code.visualstudio.com/), see the [backend .vscode](./backend/.vscode) and [frontend .vscode](./frontend/.vscode) folders for more details.
+Anda dapat men-deploy dan berinteraksi dengan kontrak ini di jaringan `localnet` yang disediakan oleh AlgoKit.
 
-## Integrating with smart contracts and application clients
+1.  **Deploy Kontrak**
+    Gunakan perintah `deploy` dari AlgoKit. Anda bisa menambahkan `--create-args` untuk memanggil metode `create` saat deploy.
+    ```bash
+    # Contoh deploy
+    algokit project run deploy localnet
+    ```
 
-Refer to the [sertifikat_kompetensi-contracts](projects/sertifikat_kompetensi-contracts/README.md) folder for overview of working with smart contracts, [projects/sertifikat_kompetensi-frontend](projects/sertifikat_kompetensi-frontend/README.md) for overview of the React project and the [projects/sertifikat_kompetensi-frontend/contracts](projects/sertifikat_kompetensi-frontend/src/contracts/README.md) folder for README on adding new smart contracts from backend as application clients on your frontend. The templates provided in these folders will help you get started.
-When you compile and generate smart contract artifacts, your frontend component will automatically generate typescript application clients from smart contract artifacts and move them to `frontend/src/contracts` folder, see [`generate:app-clients` in package.json](projects/sertifikat_kompetensi-frontend/package.json). Afterwards, you are free to import and use them in your frontend application.
+2.  **Memanggil Metode Kontrak**
+    Setelah di-deploy, Anda bisa menggunakan `goal` atau _script_ untuk memanggil metode `issue_certificate` dan `verify_certificate`.
 
-The frontend starter also provides an example of interactions with your SertifikatKompetensiClient in [`AppCalls.tsx`](projects/sertifikat_kompetensi-frontend/src/components/AppCalls.tsx) component by default.
+    **Contoh Menerbitkan Sertifikat (menggunakan `goal`):**
+    ```bash
+    # Ganti APP_ID dengan ID aplikasi Anda
+    goal app method --app-id APP_ID --from <ALAMAT_KREATOR> --method "issue_certificate(string,string,uint64)uint64" --arg '"Nama Peserta"' --arg '"Developer Python"' --arg 1672531200
+    ```
 
-## Next Steps
+    **Contoh Memverifikasi Sertifikat (menggunakan `goal`):**
+    ```bash
+    goal app method --app-id APP_ID --from <ALAMAT_SIAPAPUN> --method "verify_certificate(uint64)string" --arg 1
+    ```
 
-You can take this project and customize it to build your own decentralized applications on Algorand. Make sure to understand how to use AlgoKit and how to write smart contracts for Algorand before you start.
+## Langkah Selanjutnya
+
+- **Kembangkan Frontend**: Gunakan starter frontend di `projects/sertifikat_kompetensi-frontend` untuk membuat antarmuka pengguna yang dapat berinteraksi dengan _smart contract_ ini.
+- **Deploy ke TestNet**: Setelah pengujian di `localnet` berhasil, Anda dapat men-deploy kontrak ini ke `TestNet` agar dapat diakses secara publik.
+- **Tambahkan Fitur**: Pertimbangkan untuk menambahkan fitur baru seperti pencabutan sertifikat (`revoke_certificate`) atau transfer kepemilikan.

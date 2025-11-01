@@ -1,43 +1,66 @@
-from algopy import ARC4Contract, String, UInt64, arc4
-
-
-class Certificate(arc4.Struct):
-    name: arc4.String
-    title: arc4.String
-    issue_date: arc4.UInt64
+from algopy import ARC4Contract, GlobalState, BoxMap, UInt64, Account, Txn, Global
+from algopy.arc4 import abimethod, String
 
 
 class SertifikatKompetensi(ARC4Contract):
     def __init__(self) -> None:
-        self.certificates = arc4.BoxMapping[arc4.UInt64, Certificate]()
-        self.last_certificate_id = UInt64(0)
+        # Menyimpan jumlah total sertifikat yang diterbitkan
+        self.total_certificates = GlobalState(UInt64(0))
+        # Menyimpan sertifikat berdasarkan ID (UInt64 → String berisi hash unik sertifikat)
+        self.certificates = BoxMap(UInt64, String)
+        # Menyimpan penerbit (Account → Boolean-like UInt64)
+        self.approved_issuers = BoxMap(Account, UInt64)
 
-    @arc4.abimethod(allow_actions=["NoOp"], create="require")
-    def create_application(self) -> None:
+    @abimethod(create="require")
+    def create(self) -> None:
         """
-        Metode ini dipanggil saat aplikasi/kontrak dibuat.
+        Dipanggil saat kontrak dibuat.
+        Menandai creator sebagai issuer yang sah.
         """
-        self.last_certificate_id = UInt64(0)
+        self.approved_issuers[Global.creator_address] = UInt64(1)
 
-    @arc4.abimethod
-    def issue_certificate(self, name: String, title: String, issue_date: UInt64) -> UInt64:
+    @abimethod
+    def add_issuer(self, new_issuer: Account) -> String:
         """
-        Menerbitkan sertifikat baru dan menyimpannya.
-        Hanya pemilik kontrak yang bisa memanggil ini.
+        Menambahkan akun yang diizinkan untuk menerbitkan sertifikat.
+        Hanya creator yang bisa menambah issuer.
         """
-        # assert Txn.sender == Global.creator_address
+        assert Txn.sender == Global.creator_address, "Only creator can add issuers"
+        self.approved_issuers[new_issuer] = UInt64(1)
+        return String("Issuer added successfully")
 
-        new_id = self.last_certificate_id + 1
-        self.last_certificate_id = new_id
+    @abimethod
+    def issue_certificate(self, certificate_hash: String) -> UInt64:
+        """
+        Menerbitkan sertifikat baru dengan hash unik (misalnya hash SHA256 dari file PDF).
+        """
+        # Pastikan hanya issuer sah yang bisa menerbitkan
+        is_issuer, valid = self.approved_issuers.maybe(Txn.sender)
+        assert valid and is_issuer == UInt64(1), "Unauthorized issuer"
 
-        cert = Certificate(name=name, title=title, issue_date=issue_date)
-        self.certificates[new_id] = cert
+        # Naikkan total sertifikat dan buat ID baru
+        new_id = self.total_certificates.value + UInt64(1)
+        self.total_certificates.value = new_id
+
+        # Simpan hash sertifikat
+        self.certificates[new_id] = certificate_hash
 
         return new_id
 
-    @arc4.abimethod(allow_actions=["NoOp"])
-    def verify_certificate(self, certificate_id: UInt64) -> Certificate:
+    @abimethod
+    def verify_certificate(self, certificate_id: UInt64, certificate_hash: String) -> String:
         """
-        Memverifikasi dan mengembalikan detail sertifikat berdasarkan ID.
+        Memverifikasi apakah hash sertifikat sesuai dengan yang tersimpan.
+        """
+        stored_hash = self.certificates[certificate_id]
+        if stored_hash == certificate_hash:
+            return String("Sertifikat valid dan terdaftar.")
+        else:
+            return String("Sertifikat tidak valid atau telah dipalsukan.")
+
+    @abimethod
+    def get_certificate(self, certificate_id: UInt64) -> String:
+        """
+        Mengambil hash sertifikat berdasarkan ID (misalnya untuk menampilkan data di front-end).
         """
         return self.certificates[certificate_id]

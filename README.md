@@ -1,65 +1,106 @@
-# Smart Contract Sertifikat Kompetensi
+# Sertifikat Kompetensi - Algorand Smart Contract
 
-Proyek ini adalah contoh _smart contract_ di blockchain Algorand untuk menerbitkan dan memverifikasi sertifikat kompetensi digital. Dibangun menggunakan `algopy` dan `AlgoKit`.
+This project contains an Algorand smart contract for managing digital competency certificates (`Sertifikat Kompetensi`). It provides a secure, transparent, and decentralized way to issue, manage, and verify certificates on the blockchain.
 
-## Konsep Dasar
+This project is built using AlgoKit.
 
-_Smart contract_ ini memiliki dua fungsi utama:
+## 🚀 Getting Started
 
-1.  **`issue_certificate`**: Untuk menerbitkan sertifikat baru. Hanya pembuat kontrak (_creator_) yang dapat memanggil fungsi ini.
-2.  **`verify_certificate`**: Untuk memverifikasi keaslian sertifikat berdasarkan ID uniknya. Siapa pun dapat memanggil fungsi ini.
+### Prerequisites
 
-## Setup & Instalasi
+Before you begin, ensure you have the following installed on your system:
 
-Pastikan Anda sudah menginstal [Docker](https://www.docker.com/) dan [AlgoKit](https://github.com/algorandfoundation/algokit-cli#install).
+- **Python** (3.10 or higher)
+- **Docker** (for running a local Algorand network)
+- **PipX** (for installing Python CLI applications in isolated environments)
+  ```bash
+  python3 -m pip install --user pipx
+  python3 -m pipx ensurepath
+  ```
 
-1.  **Clone Repository**
+### Installation
+
+1.  **Install AlgoKit**:
+    Use `pipx` to install the Algorand AlgoKit CLI.
     ```bash
-    git clone <URL_REPOSITORY_ANDA>
+    pipx install algokit
+    ```
+
+2.  **Clone the Repository**:
+    ```bash
+    git clone <your-repository-url>
     cd sertifikat_kompetensi
     ```
 
-2.  **Bootstrap Proyek**
-    Perintah ini akan menginstal semua dependensi yang diperlukan untuk backend dan frontend.
+3.  **Bootstrap the Project**:
+    This command sets up the Python virtual environment and installs all the necessary dependencies for the project.
     ```bash
-    algokit project bootstrap all
+    algokit bootstrap all
     ```
 
-3.  **Build Smart Contract**
-    Masuk ke direktori kontrak dan kompilasi _smart contract_ Anda.
+## ⚙️ Usage Guide
+
+This project uses AlgoKit to streamline development, testing, and deployment. Here are the most common commands you'll use.
+
+### LocalNet
+
+AlgoKit provides a local Algorand network running in Docker for development and testing.
+
+*   **Start LocalNet**:
     ```bash
-    cd projects/sertifikat_kompetensi-contracts
-    algokit project run build
-    ```
-    Jika berhasil, artefak kontrak (file `application.json`, `approval.teal`, dan `clear.teal`) akan dibuat di dalam direktori `sertifikat_kompetensi-contracts/smart_contracts/artifacts/sertifikat_kompetensi`.
-
-## Menjalankan & Berinteraksi dengan Kontrak
-
-Anda dapat men-deploy dan berinteraksi dengan kontrak ini di jaringan `localnet` yang disediakan oleh AlgoKit.
-
-1.  **Deploy Kontrak**
-    Gunakan perintah `deploy` dari AlgoKit. Anda bisa menambahkan `--create-args` untuk memanggil metode `create` saat deploy.
-    ```bash
-    # Contoh deploy
-    algokit project run deploy localnet
+    algokit localnet start
     ```
 
-2.  **Memanggil Metode Kontrak**
-    Setelah di-deploy, Anda bisa menggunakan `goal` atau _script_ untuk memanggil metode `issue_certificate` dan `verify_certificate`.
-
-    **Contoh Menerbitkan Sertifikat (menggunakan `goal`):**
+*   **Stop LocalNet**:
     ```bash
-    # Ganti APP_ID dengan ID aplikasi Anda
-    goal app method --app-id APP_ID --from <ALAMAT_KREATOR> --method "issue_certificate(string,string,uint64)uint64" --arg '"Nama Peserta"' --arg '"Developer Python"' --arg 1672531200
+    algokit localnet stop
     ```
 
-    **Contoh Memverifikasi Sertifikat (menggunakan `goal`):**
+*   **Explore LocalNet**:
+    Once started, you can access the Daffi Web Wallet to manage accounts and the AlgoExplorer to view transactions.
+
+### Smart Contract Development
+
+All smart contract code is located in the `projects/sertifikat_kompetensi-contracts/smart_contracts/` directory.
+
+*   **Build the Contract**:
+    Compile the PyTEAL smart contract into TEAL and generate the application specification (`app.json`).
     ```bash
-    goal app method --app-id APP_ID --from <ALAMAT_SIAPAPUN> --method "verify_certificate(uint64)string" --arg 1
+    algokit build
+    ```
+    The build artifacts will be placed in the `projects/sertifikat_kompetensi-contracts/smart_contracts/artifacts/` directory.
+
+*   **Run Tests**:
+    Execute the contract tests located in the `tests/` directory. Make sure your LocalNet is running.
+    ```bash
+    algokit test
     ```
 
-## Langkah Selanjutnya
+### Deployment
 
-- **Kembangkan Frontend**: Gunakan starter frontend di `projects/sertifikat_kompetensi-frontend` untuk membuat antarmuka pengguna yang dapat berinteraksi dengan _smart contract_ ini.
-- **Deploy ke TestNet**: Setelah pengujian di `localnet` berhasil, Anda dapat men-deploy kontrak ini ke `TestNet` agar dapat diakses secara publik.
-- **Tambahkan Fitur**: Pertimbangkan untuk menambahkan fitur baru seperti pencabutan sertifikat (`revoke_certificate`) atau transfer kepemilikan.
+You can deploy the smart contract to LocalNet, TestNet, or MainNet.
+
+1.  **Set Up Your Deployer Account**:
+    Create a `.env` file in the project root by copying the `.env.template` file.
+    ```bash
+    cp .env.template .env
+    ```
+    Update the `.env` file with the private key (mnemonic) of the account you want to use for deployment. For LocalNet, you can get pre-funded account mnemonics by running:
+    ```bash
+    algokit localnet wallet list
+    ```
+
+2.  **Deploy the Contract**:
+    Run the deploy command. By default, it deploys to `localnet`.
+    ```bash
+    algokit deploy
+    ```
+    To deploy to another network like `testnet`, use the `--network` flag:
+    ```bash
+    algokit deploy --network testnet
+    ```
+    After a successful deployment, the App ID will be printed to the console and saved in the `.algokit.app.yaml` file for future interactions.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a pull request or open an issue for any bugs or feature requests.

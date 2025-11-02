@@ -13,7 +13,7 @@
 
 
 # dotenv environment variable files
-../.env
+../sertifikat_kompetensi-contracts/.env
 env/
 
 # misc
